@@ -1,0 +1,169 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Chinese Teaching Flashcards</title>
+<style>
+  body { 
+    display: flex; justify-content: center; align-items: center; 
+    height: 100vh; margin: 0; background-color: #FDF6E3; 
+    font-family: "Segoe UI", sans-serif; user-select: none;
+    transition: background 0.5s;
+  }
+  #container { display: flex; align-items: center; gap: 20px; }
+  #card-wrapper { display: flex; flex-direction: column; align-items: center; gap: 10px; }
+  #card { 
+    width: 60vw; height: 60vh; background: white; 
+    border-radius: 40px; box-shadow: 0 20px 40px rgba(0,0,0,0.15); 
+    display: flex; flex-direction: column; justify-content: center; align-items: center; 
+    text-align: center; padding: 40px; border: 8px dashed #FFD166; cursor: pointer;
+    outline: none;
+  }
+  
+  #main-text { font-size: 8vw; font-weight: bold; color: #264653; margin-bottom: 10px; }
+  #sub-text { font-size: 2.5vw; color: #E76F51; margin-top: 10px; line-height: 1.4; }
+  
+  #progress-bar { font-size: 18px; color: #555; font-weight: bold; }
+  
+  .btn-group { display: flex; flex-direction: column; gap: 10px; }
+  button, select { 
+    padding: 12px 18px; font-size: 15px; cursor: pointer; 
+    border: none; border-radius: 12px; background: #FFD166; color: white;
+    font-weight: bold; box-shadow: 0 4px 8px rgba(0,0,0,0.1); width: 130px;
+  }
+  button:hover { background: #E76F51; }
+  .hint { position: absolute; bottom: 30px; font-size: 20px; color: #888; }
+</style>
+</head>
+<body>
+
+  <div id="container">
+    <div class="btn-group">
+      <select id="lesson-select" onchange="switchLesson()">
+        <option value="lesson1">Lesson 1</option>
+        <option value="lesson2">Lesson 2</option>
+        <option value="lesson3">Lesson 3</option>
+        <option value="lesson4">Lesson 4</option>
+        <option value="lesson5">Lesson 5</option>
+        <option value="lesson6">Lesson 6</option>
+        <option value="lesson7">Lesson 7</option>
+        <option value="lesson8">Lesson 8</option>
+        <option value="lesson9">Lesson 9</option>
+        <option value="lesson10">Lesson 10</option>
+        <option value="lesson11">Lesson 11</option>
+        <option value="lesson12">Lesson 12</option>
+      </select>
+      <button onclick="changeCard(-1)">Previous</button>
+      <button id="mode-btn" onclick="toggleMode()">Mode: Order</button>
+      <button onclick="changeCard(1)">Next</button>
+    </div>
+    
+    <div id="card-wrapper">
+      <div id="card" tabindex="0" onclick="nextStep()">
+        <div id="main-text"></div>
+        <div id="sub-text"></div>
+      </div>
+      <div id="progress-bar">Progress: 0 / 0</div>
+    </div>
+  </div>
+  
+  <div class="hint">👉 Space: Next Step | Up/Down: Change Card 👈</div>
+
+  <script>
+    window.onload = () => document.getElementById('card').focus();
+
+    window.addEventListener('keydown', (event) => {
+      if (event.code === 'Space') { event.preventDefault(); nextStep(); }
+      else if (event.code === 'ArrowUp') { event.preventDefault(); changeCard(-1); }
+      else if (event.code === 'ArrowDown') { event.preventDefault(); changeCard(1); }
+    });
+
+    const allData = {
+      lesson1: [{h: "你", p: "nǐ", e: "you"}, {h: "好", p: "hǎo", e: "good"}, {h: "们", p: "men", e: "plural"}, {h: "叫", p: "jiào", e: "to call"}, {h: "什么", p: "shénme", e: "what"}, {h: "名字", p: "míngzi", e: "name"}, {h: "我", p: "wǒ", e: "I"}, {h: "他", p: "tā", e: "he"}, {h: "呢", p: "ne", e: "particle"}, {h: "是", p: "shì", e: "to be"}, {h: "哪", p: "nǎ", e: "which"}, {h: "国", p: "guó", e: "country"}, {h: "人", p: "rén", e: "person"}, {h: "也", p: "yě", e: "also"}, {h: "她", p: "tā", e: "she"}, {h: "谁", p: "shéi", e: "who"}, {h: "的", p: "de", e: "possessive"}, {h: "同学", p: "tóngxué", e: "classmate"}, {h: "你好！", p: "Nǐ hǎo!", e: "Hello!"}, {h: "你们好！", p: "Nǐmen hǎo!", e: "Hello everyone!"}, {h: "你叫什么名字？", p: "Nǐ jiào shénme míngzi?", e: "What is your name?"}, {h: "你是哪国人？", p: "Nǐ shì nǎ guó rén?", e: "What is your nationality?"}, {h: "他是哪国人？", p: "Tā shì nǎ guó rén?", e: "What is his nationality?"}, {h: "我是美国人，你呢？", p: "Wǒ shì Měiguó rén, nǐ ne?", e: "I am American, how about you?"}, {h: "我也是。", p: "Wǒ yě shì.", e: "Me too."}, {h: "他是谁？", p: "Tā shì shéi?", e: "Who is he?"}, {h: "他是我的同学。", p: "Tā shì wǒ de tóngxué.", e: "He is my classmate."}],
+      lesson2: [{h: "这", p: "zhè", e: "this"}, {h: "个", p: "gè", e: "MW"}, {h: "怎么", p: "zěnme", e: "how"}, {h: "说", p: "shuō", e: "to speak"}, {h: "不", p: "bù", e: "not"}, {h: "知道", p: "zhīdào", e: "know"}, {h: "问", p: "wèn", e: "to ask"}, {h: "老师", p: "lǎoshī", e: "teacher"}, {h: "请", p: "qǐng", e: "please"}, {h: "学习", p: "xuéxí", e: "study/practice"}, {h: "难", p: "nán", e: "difficult"}, {h: "吗", p: "ma", e: "?"}, {h: "很", p: "hěn", e: "very"}, {h: "这是什么？", p: "Zhè shì shénme?", e: "What is this?"}, {h: "我也不知道。", p: "Wǒ yě bù zhīdào.", e: "I don't know either."}, {h: "你问老师。", p: "Nǐ wèn lǎoshī.", e: "Ask the teacher."}, {h: "请问，这个汉语怎么说？", p: "Qǐngwèn, zhège Hànyǔ zěnme shuō?", e: "Excuse me, how to say this in Chinese?"}, {h: "你学习什么？", p: "Nǐ xuéxí shénme?", e: "What are you studying?"}, {h: "我学习汉语。", p: "Wǒ xuéxí Hànyǔ.", e: "I study Chinese."}, {h: "汉语难吗？", p: "Hànyǔ nán ma?", e: "Is Chinese hard?"}, {h: "汉语很难。", p: "Hànyǔ hěn nán.", e: "Chinese is very hard."}],
+      lesson3: [{h: "苹果", p: "píngguǒ", e: "apple"}, {h: "多少", p: "duōshao", e: "how many/few"}, {h: "钱", p: "qián", e: "money"}, {h: "小贩", p: "xiǎofàn", e: "pedlar"}, {h: "块", p: "kuài", e: "buck"}, {h: "斤", p: "jīn", e: "500g"}, {h: "要", p: "yào", e: "to want"}, {h: "两", p: "liǎng", e: "two"}, {h: "售货员", p: "shòuhuòyuán", e: "salesperson"}, {h: "瓶", p: "píng", e: "bottle"}, {h: "水", p: "shuǐ", e: "water"}, {h: "还", p: "hái", e: "in addition"}, {h: "包", p: "bāo", e: "pack"}, {h: "饼干", p: "bǐnggān", e: "biscuit"}, {h: "苹果多少钱？", p: "Píngguǒ duōshao qián?", e: "How much are apples?"}, {h: "苹果四块一斤。", p: "Píngguǒ sì kuài yì jīn.", e: "Apples are 4 yuan/jin."}, {h: "我要两斤苹果。", p: "Wǒ yào liǎng jīn píngguǒ.", e: "I want 2 jin of apples."}, {h: "你要什么？", p: "Nǐ yào shénme?", e: "What do you want?"}, {h: "我要一瓶水，还要一包饼干。", p: "Wǒ yào yì píng shuǐ, hái yào yì bāo bǐnggān.", e: "I want a bottle of water and a bag of biscuits."}, {h: "多少钱？", p: "Duōshao qián?", e: "How much?"}, {h: "七块五。", p: "Qī kuài wǔ.", e: "7.5 yuan."}],
+      lesson4: [{h: "面条儿", p: "miàntiáor", e: "noodles"}, {h: "比", p: "bǐ", e: "than"}, {h: "饺子", p: "jiǎozi", e: "dumplings"}, {h: "好吃", p: "hǎochī", e: "delicious"}, {h: "师傅", p: "shīfu", e: "master"}, {h: "炒面", p: "chǎomiàn", e: "fried noodle"}, {h: "炒", p: "chǎo", e: "fry"}, {h: "那", p: "nà", e: "that"}, {h: "鸡蛋", p: "jīdàn", e: "egg"}, {h: "炒饭", p: "chǎofàn", e: "fried rice"}, {h: "盘", p: "pán", e: "plate"}, {h: "对", p: "duì", e: "that's right"}, {h: "太……了", p: "tài...le", e: "extremely"}, {h: "喜欢", p: "xǐhuan", e: "to like"}, {h: "你好！你要什么？", p: "Nǐ hǎo! Nǐ yào shénme?", e: "Hello! What do you want?"}, {h: "请问，这是什么？", p: "Qǐngwèn, zhè shì shénme?", e: "Excuse me, what is this?"}, {h: "这是炒面，那是鸡蛋炒饭。", p: "Zhè shì chǎomiàn, nà shì jīdàn chǎofàn.", e: "This is fried noodles, that is egg fried rice."}, {h: "我要一盘鸡蛋炒饭。", p: "Wǒ yào yì pán jīdàn chǎofàn.", e: "I want a plate of egg fried rice."}, {h: "这是饺子吗？", p: "Zhè shì jiǎozi ma?", e: "Are these dumplings?"}, {h: "饺子好吃吗？", p: "Jiǎozi hǎochī ma?", e: "Are the dumplings delicious?"}, {h: "太好吃了。", p: "Tài hǎochī le.", e: "Too delicious."}, {h: "我很喜欢饺子。", p: "Wǒ hěn xǐhuan jiǎozi.", e: "I like dumplings."}, {h: "我喜欢面条儿。", p: "Wǒ xǐhuan miàntiáor.", e: "I like noodles."}, {h: "面条儿比饺子好吃。", p: "Miàntiáor bǐ jiǎozi hǎochī.", e: "Noodles are better than dumplings."}],
+      lesson5: [{h: "鸡肉", p: "jīròu", e: "chicken"}, {h: "还是", p: "háishi", e: "or"}, {h: "牛肉", p: "niúròu", e: "beef"}, {h: "想", p: "xiǎng", e: "want"}, {h: "鱼", p: "yú", e: "fish"}, {h: "素", p: "sù", e: "vegetarian"}, {h: "点菜", p: "diǎn cài", e: "order"}, {h: "甜", p: "tián", e: "sweet"}, {h: "有", p: "yǒu", e: "have"}, {h: "又......又......", p: "yòu...yòu...", e: "both...and..."}, {h: "有点儿", p: "yǒudiǎnr", e: "a little"}, {h: "怕", p: "pà", e: "afraid"}, {h: "蔬菜", p: "shūcài", e: "vegetables"}, {h: "豆腐", p: "dòufu", e: "tofu"}, {h: "西红柿", p: "xīhóngshì", e: "tomato"}, {h: "喝", p: "hē", e: "drink"}, {h: "一点儿", p: "yìdiǎnr", e: "a little"}, {h: "壶", p: "hú", e: "pot"}, {h: "茉莉花", p: "mòlìhuā", e: "jasmine"}, {h: "茶", p: "chá", e: "tea"}, {h: "饿", p: "è", e: "hungry"}, {h: "快", p: "kuài", e: "quick"}, {h: "服务员", p: "fúwùyuán", e: "waiter"}, {h: "糖醋鱼", p: "tángcùyú", e: "sweet/sour fish"}, {h: "酸", p: "suān", e: "sour"}, {h: "铁板牛肉", p: "tiěbǎn niúròu", e: "sizzling beef"}, {h: "辣", p: "là", e: "spicy"}, {h: "啤酒", p: "píjiǔ", e: "beer"}, {h: "你想吃什么？", p: "Nǐ xiǎng chī shénme?", e: "What would you like to eat?"}, {h: "我想吃鱼。", p: "Wǒ xiǎng chī yú.", e: "I want to eat fish."}, {h: "我不吃鱼，我吃肉。", p: "Wǒ bù chī yú, wǒ chī ròu.", e: "I don't eat fish, I eat meat."}, {h: "你喜欢鸡肉还是牛肉？", p: "Nǐ xǐhuan jīròu háishi niúròu?", e: "Do you like chicken or beef?"}, {h: "我喜欢牛肉。", p: "Wǒ xǐhuan niúròu.", e: "I like beef."}, {h: "你也吃肉吗？", p: "Nǐ yě chī ròu ma?", e: "Do you also eat meat?"}, {h: "我不吃肉，我吃素。", p: "Wǒ bù chī ròu, wǒ chī sù.", e: "I don't eat meat, I eat vegetarian."}, {h: "服务员，我们点菜。", p: "Fúwùyuán, wǒmen diǎn cài.", e: "Waiter, order please."}, {h: "我喜欢甜的。", p: "Wǒ xǐhuan tián de.", e: "I like sweet food."}, {h: "有甜的鱼吗？", p: "Yǒu tián de yú ma?", e: "Is there sweet fish?"}, {h: "糖醋鱼又酸又甜。", p: "Tángcùyú yòu suān yòu tián.", e: "Sweet and sour fish is sour and sweet."}, {h: "我要一个牛肉。", p: "Wǒ yào yī ge niúròu.", e: "I want a beef dish."}, {h: "这个铁板牛肉有点儿辣。", p: "Zhè ge tiěbǎn niúròu yǒudiǎnr là.", e: "This beef is a bit spicy."}, {h: "你不怕辣吗？", p: "Nǐ bú pà là ma?", e: "Are you not afraid of spicy?"}, {h: "我喜欢吃辣的。", p: "Wǒ xǐhuan chī là de.", e: "I like spicy food."}, {h: "我要一个豆腐", p: "Wǒ yào yī ge dòufu", e: "I want a tofu dish."}, {h: "还要一个蔬菜……西红柿炒鸡蛋。", p: "Hái yào yī ge shūcài... xīhóngshì chǎo jīdàn.", e: "And a vegetable dish... tomato scrambled eggs."}, {h: "喝一点儿什么？", p: "Hē yìdiǎnr shénme?", e: "What to drink?"}, {h: "要一壶茉莉花茶，两瓶啤酒。", p: "Yào yì hú mòlìhuā chá, liǎng píng píjiǔ.", e: "A pot of jasmine tea, two bottles of beer."}, {h: "我们很饿", p: "Wǒmen hěn è", e: "We are hungry."}, {h: "请快一点儿，好吗？", p: "Qǐng kuài yìdiǎnr, hǎo ma?", e: "Please hurry, okay?"}],
+      lesson6: [{h: "洗手间", p: "xǐshǒujiān", e: "restroom"}, {h: "在", p: "zài", e: "at"}, {h: "哪儿", p: "nǎr", e: "where"}, {h: "这儿", p: "zhèr", e: "here"}, {h: "那儿", p: "nàr", e: "there"}, {h: "往", p: "wǎng", e: "towards"}, {h: "走", p: "zǒu", e: "walk"}, {h: "前", p: "qián", e: "front"}, {h: "后", p: "hòu", e: "back"}, {h: "左", p: "zuǒ", e: "left"}, {h: "右", p: "yòu", e: "right"}, {h: "谢谢", p: "xièxie", e: "thanks"}, {h: "不客气", p: "bú kèqi", e: "you're welcome"}, {h: "超市", p: "chāoshì", e: "supermarket"}, {h: "大学生", p: "dàxuéshēng", e: "university student"}, {h: "到", p: "dào", e: "arrive"}, {h: "第", p: "dì", e: "prefix for ordinals"}, {h: "路口", p: "lùkǒu", e: "intersection"}, {h: "可以", p: "kěyǐ", e: "may"}, {h: "洗", p: "xǐ", e: "to print (photos)"}, {h: "照片", p: "zhàopiàn", e: "photo"}, {h: "对不起", p: "duìbuqǐ", e: "sorry"}, {h: "没关系", p: "méi guānxi", e: "no problem"}, {h: "再见", p: "zàijiàn", e: "goodbye"}, {h: "请问，洗手间在哪儿？", p: "Qǐngwèn, xǐshǒujiān zài nǎr?", e: "Excuse me, where is the restroom?"}, {h: "在这儿，往前走，往右拐。", p: "Zài zhèr, wǎng qián zǒu, wǎng yòu guǎi.", e: "It's here, walk forward and turn right."}, {h: "谢谢。不客气。", p: "Xièxie. Bú kèqi.", e: "Thanks. You're welcome."}, {h: "请问，超市怎么走？", p: "Qǐngwèn, chāoshì zěnme zǒu?", e: "Excuse me, how to get to the supermarket?"}, {h: "往前走，到第二个路口往左拐。", p: "Wǎng qián zǒu, dào dì èr ge lùkǒu wǎng zuǒ guǎi.", e: "Walk forward, turn left at the second intersection."}, {h: "超市在你的右边。", p: "Chāoshì zài nǐ de yòubiān.", e: "The supermarket is on your right."}, {h: "那儿可以洗照片吗？", p: "Nàr kěyǐ xǐ zhàopiàn ma?", e: "Can I develop photos there?"}, {h: "对不起，我不知道。", p: "Duìbuqǐ, wǒ bù zhīdào.", e: "Sorry, I don't know."}, {h: "没关系，谢谢你，再见。", p: "Méi guānxi, xièxie nǐ, zàijiàn.", e: "No problem, thank you, goodbye."}],
+      lesson7: [{h: "去", p: "qù", e: "go"}, {h: "历史", p: "lìshǐ", e: "history"}, {h: "博物馆", p: "bówùguǎn", e: "museum"}, {h: "司机", p: "sījī", e: "driver"}, {h: "了", p: "le", e: "particle"}, {h: "把", p: "bǎ", e: ""}, {h: "发票", p: "fāpiào", e: "receipt"}, {h: "给", p: "gěi", e: "give"}, {h: "车", p: "chē", e: "vehicle"}, {h: "公园", p: "gōngyuán", e: "park"}, {h: "乘客", p: "chéngkè", e: "passenger"}, {h: "路", p: "lù", e: "road/route"}, {h: "坐", p: "zuò", e: "sit/take"}, {h: "地铁", p: "dìtiě", e: "subway"}, {h: "吧", p: "ba", e: "particle"}, {h: "近", p: "jìn", e: "near"}, {h: "走路", p: "zǒu lù", e: "walk"}, {h: "分钟", p: "fēnzhōng", e: "minute"}, {h: "就", p: "jiù", e: "just"}, {h: "师傅，去历史博物馆。", p: "Shīfu, qù lìshǐ bówùguǎn.", e: "Driver, go to the history museum."}, {h: "到了，二十一块。", p: "Dàole, èrshíyī kuài.", e: "We're here, 21 yuan."}, {h: "请把发票给我，谢谢。", p: "Qǐng bǎ fāpiào gěi wǒ, xièxie.", e: "Please give me the receipt, thanks."}, {h: "请问，这车到上林公园吗？", p: "Qǐngwèn, zhè chē dào Shànglín Gōngyuán ma?", e: "Excuse me, does this bus go to Shanglin Park?"}, {h: "不到，3路、12路到。", p: "Bú dào, 3 lù, 12 lù dào.", e: "No, bus 3 or 12 goes there."}, {h: "你坐地铁吧，地铁快。", p: "Nǐ zuò dìtiě ba, dìtiě kuài.", e: "Take the subway, it's faster."}, {h: "我还想去蓝湖。", p: "Wǒ hái xiǎng qù Lánhú.", e: "I also want to go to Lanhu."}, {h: "去蓝湖坐什么车？", p: "Qù Lánhú zuò shénme chē?", e: "Which bus to Lanhu?"}, {h: "蓝湖很近。", p: "Lánhú hěn jìn.", e: "Lanhu is very close."}, {h: "你可以走路去。", p: "Nǐ kěyǐ zǒu lù qù.", e: "You can walk."}, {h: "十分钟就到。", p: "Shí fēnzhōng jiù dào.", e: "It takes 10 minutes."}],
+      lesson8: [{h: "麻烦", p: "Máfan", e: "trouble"}, {h: "帮", p: "bāng", e: "help"}, {h: "照相", p: "zhàoxiàng", e: "take photo"}, {h: "张", p: "zhāng", e: "MW"}, {h: "路人", p: "lùrén", e: "passerby"}, {h: "楼", p: "lóu", e: "building"}, {h: "没问题", p: "méiwèntí", e: "no problem"}, {h: "半身", p: "bànshēn", e: "waist up"}, {h: "全身", p: "quánshēn", e: "full body"}, {h: "要", p: "yào", e: "want"}, {h: "笑", p: "xiào", e: "smile"}, {h: "再", p: "zài", e: "again"}, {h: "看", p: "kàn", e: "look"}, {h: "得", p: "de", e: "particle"}, {h: "按", p: "àn", e: "press"}, {h: "茄子", p: "qiézi", e: "cheese/eggplant"}, {h: "麻烦你帮我们照张相。", p: "Máfan nǐ bāng wǒmen zhào zhāng xiàng.", e: "Could you please help us take a photo?"}, {h: "你们想照什么？", p: "Nǐmen xiǎng zhào shénme?", e: "What do you want to take a photo of?"}, {h: "我帮你们。", p: "Wǒ bāng nǐmen.", e: "I'll help you."}, {h: "我想照这个楼。", p: "Wǒ xiǎng zhào zhège lóu.", e: "I want to take a picture of this building."}, {h: "没问题。", p: "Méiwèntí.", e: "No problem."}, {h: "你想照半身还是全身？", p: "Nǐ xiǎng zhào bànshēn háishi quánshēn?", e: "Do you want half-length or full-length?"}, {h: "我要照半身。", p: "Wǒ yào zhào bànshēn.", e: "I want half-length."}, {h: "往右一点，笑一 笑。", p: "Wǎng yòu yìdiǎn, xiào yi xiào.", e: "A bit to the right, smile."}, {h: "请再照一张。", p: "Qǐng zài zhào yì zhāng.", e: "Please take another one."}, {h: "你看看，照得好 不 好？", p: "Nǐ kànkan, zhào de hǎo bu hǎo?", e: "Look, is it good?"}, {h: "很好，谢谢你！", p: "Hěn hǎo, xièxie nǐ!", e: "Very good, thank you!"}, {h: "你们也要照一张吗？", p: "Nǐmen yě yào zhào yì zhāng ma?", e: "Do you also want one?"}, {h: "我帮你们。", p: "Wǒ bāng nǐmen.", e: "I'll help you."}, {h: "请按这儿。", p: "Qǐng àn zhèr.", e: "Press here."}, {h: "往前一点儿，", p: "Wǎng qián yìdiǎnr,", e: "Forward a bit,"}, {h: "再往前一点儿。", p: "Zài wǎng qián yìdiǎnr.", e: "Further forward."}],
+      lesson9: [{h: "明天", p: "míngtiān", e: "tomorrow"}, {h: "天气", p: "tiānqì", e: "weather"}, {h: "怎么样", p: "zěnmeyàng", e: "how about"}, {h: "电视", p: "diànshì", e: "TV"}, {h: "天气预报", p: "tiānqì yùbào", e: "weather forecast"}, {h: "雨", p: "yǔ", e: "rain"}, {h: "热", p: "rè", e: "hot"}, {h: "最", p: "zuì", e: "most"}, {h: "高", p: "gāo", e: "high"}, {h: "气温", p: "qìwēn", e: "temperature"}, {h: "度", p: "dù", e: "degree"}, {h: "闷热", p: "mēnrè", e: "muggy"}, {h: "潮湿", p: "cháoshī", e: "humid"}, {h: "啊", p: "a", e: "particle"}, {h: "下", p: "xià", e: "to fall"}, {h: "时候", p: "shíhou", e: "time"}, {h: "凉快", p: "liángkuai", e: "cool"}, {h: "更", p: "gèng", e: "more"}, {h: "今天", p: "jīntiān", e: "today"}, {h: "真", p: "zhēn", e: "really"}, {h: "冷", p: "lěng", e: "cold"}, {h: "刮风", p: "guā fēng", e: "windy"}, {h: "雪", p: "xuě", e: "snow"}, {h: "冬天", p: "dōngtiān", e: "winter"}, {h: "干燥", p: "gānzào", e: "dry"}, {h: "还", p: "hái", e: "still"}, {h: "晴天", p: "qíngtiān", e: "sunny"}, {h: "外边", p: "wàibian", e: "outside"}, {h: "一定", p: "yídìng", e: "must"}, {h: "漂亮", p: "piàoliang", e: "beautiful"}, {h: "出去", p: "chūqu", e: "go out"}, {h: "你看电视了吗？", p: "Nǐ kàn diànshì le ma?", e: "Did you watch TV?"}, {h: "明天天气怎么样？", p: "Míngtiān tiānqì zěnmeyàng?", e: "How is tomorrow's weather?"}, {h: "天气预报说明天有雨。", p: "Tiānqì yùbào shuō míngtiān yǒu yǔ.", e: "The weather forecast says it will rain tomorrow."}, {h: "热不热？", p: "Rè bu rè?", e: "Is it hot?"}, {h: "最高气温三十四度。", p: "Zuìgāo qìwēn sānshísì dù.", e: "The high is 34 degrees."}, {h: "又闷热又潮湿啊！", p: "Yòu mēnrè yòu cháoshī a!", e: "It's both muggy and humid!"}, {h: "下雨的时候可以凉快一点儿。", p: "Xià yǔ de shíhou kěyǐ liángkuai yìdiǎnr.", e: "It can be a bit cooler when it rains."}, {h: "不下雨就更热了。", p: "Bú xià yǔ jiù gèng rè le.", e: "It's even hotter without rain."}, {h: "今天真冷啊！", p: "Jīntiān zhēn lěng a!", e: "It's really cold today!"}, {h: "又刮风又下雪。", p: "Yòu guā fēng yòu xià xuě.", e: "It's windy and snowy."}, {h: "下一点儿雪好啊。", p: "Xià yìdiǎn r xuě hǎo a.", e: "A little snow is nice."}, {h: "这儿冬天很干燥。", p: "Zhèr dōngtiān hěn gānzào.", e: "It's very dry here in winter."}, {h: "明天还下雪吗？", p: "Míngtiān hái xià xuě ma?", e: "Will it still snow tomorrow?"}, {h: "我看天气预报了。", p: "Wǒ kàn tiānqì yùbào le.", e: "I saw the weather forecast."}, {h: "明天是晴天。", p: "Míngtiān shì qíngtiān.", e: "Tomorrow is sunny."}, {h: "晴天？外边一定很漂亮。", p: "Qíngtiān? Wàibian yídìng hěn piàoliang.", e: "Sunny? It must be beautiful outside."}, {h: "我们出去照相吧。", p: "Wǒmen chūqu zhàoxiàng ba.", e: "Let's go out and take photos."}],
+      lesson10: [{h: "感冒", p: "gǎnmào", e: "to catch a cold"}, {h: "了", p: "le", e: "particle"}, {h: "能", p: "néng", e: "can"}, {h: "上课", p: "shàng kè", e: "attend class"}, {h: "告诉", p: "gàosu", e: "tell"}, {h: "请假", p: "qǐng jià", e: "take leave"}, {h: "头", p: "tóu", e: "head"}, {h: "疼", p: "téng", e: "painful"}, {h: "发烧", p: "fā shāo", e: "fever"}, {h: "不用", p: "búyòng", e: "no need"}, {h: "休息", p: "xiūxi", e: "rest"}, {h: "早饭", p: "zǎofàn", e: "breakfast"}, {h: "肚子", p: "dùzi", e: "stomach"}, {h: "昨天", p: "zuótiān", e: "yesterday"}, {h: "晚上", p: "wǎnshang", e: "evening"}, {h: "次", p: "cì", e: "times"}, {h: "厕所", p: "cèsuǒ", e: "restroom"}, {h: "晚饭", p: "wǎnfàn", e: "dinner"}, {h: "朋友", p: "péngyou", e: "friend"}, {h: "烤鸭", p: "kǎoyā", e: "roast duck"}, {h: "油腻", p: "yóunì", e: "greasy"}, {h: "现在", p: "xiànzài", e: "now"}, {h: "药", p: "yào", e: "medicine"}, {h: "都", p: "dōu", e: "all"}, {h: "今天我感冒了。", p: "Jīntiān wǒ gǎnmào le.", e: "I caught a cold today."}, {h: "不能去上课。", p: "Bùnéng qù shàng kè.", e: "Cannot attend class."}, {h: "你告诉老师吧。", p: "Nǐ gàosu lǎoshī ba.", e: "Tell the teacher."}, {h: "我帮你请假。", p: "Wǒ bāng nǐ qǐng jià.", e: "I'll help you ask for leave."}, {h: "你怎么样？", p: "Nǐ zěnmeyàng?", e: "How are you?"}, {h: "头疼。", p: "Tóu téng.", e: "Headache."}, {h: "发烧吗？", p: "Fā shāo ma?", e: "Do you have a fever?"}, {h: "不发烧。", p: "Bù fā shāo.", e: "No fever."}, {h: "要不要去医院看看？", p: "Yào bu yào qù yīyuàn kànkan?", e: "Should we go to the hospital?"}, {h: "不用，休息休息就好了。", p: "Búyòng, xiūxi xiūxi jiù hǎo le.", e: "No need, just rest."}, {h: "你吃不吃早饭？", p: "Nǐ chī bu chī zǎofàn?", e: "Do you eat breakfast?"}, {h: "我不想吃。", p: "Wǒ bù xiǎng chī.", e: "I don't want to eat."}, {h: "你怎么了？", p: "Nǐ zěnme le?", e: "What's wrong with you?"}, {h: "肚子疼。", p: "Dùzi téng.", e: "Stomach ache."}, {h: "昨天晚上去了三四次厕所。", p: "Zuótiān wǎnshang qùle sǎnsì cì cèsuǒ.", e: "Went to the restroom 3-4 times last night."}, {h: "你昨天晚饭吃什么了？", p: "Nǐ zuótiān wǎnfàn chī shénme le?", e: "What did you eat for dinner?"}, {h: "我和朋友去吃烤鸭了。", p: "Wǒ hé péngyou qù chī kǎoyā le.", e: "I went for roast duck with friends."}, {h: "吃了很多。", p: "Chīle hěn duō.", e: "Ate a lot."}, {h: "烤鸭很油腻。", p: "Kǎoyā hěn yóunì.", e: "Roast duck is greasy."}, {h: "不能一次吃太多。", p: "Bùnéng yī cì chī tài duō.", e: "Can't eat too much at once."}, {h: "现在我知道了。", p: "Xiànzài wǒ zhīdào le.", e: "Now I know."}, {h: "你要吃药吗？", p: "Nǐ yào chī yào ma?", e: "Do you want to take medicine?"}, {h: "现在什么都不想吃。", p: "Xiànzài shénme dōu bù xiǎng chī.", e: "I don't want to eat anything now."}],
+      lesson11: [{h: "事", p: "shì", e: "matter"}, {h: "喂", p: "wèi", e: "hello"}, {h: "生日", p: "shēngrì", e: "birthday"}, {h: "聚会", p: "jùhuì", e: "party"}, {h: "来", p: "lái", e: "come"}, {h: "当然", p: "dāngrán", e: "of course"}, {h: "几", p: "jǐ", e: "how many"}, {h: "点", p: "diǎn", e: "o'clock"}, {h: "学校", p: "xuéxiào", e: "school"}, {h: "南门", p: "nánmén", e: "south gate"}, {h: "一起", p: "yìqǐ", e: "together"}, {h: "电话", p: "diànhuà", e: "phone"}, {h: "号码", p: "hàomǎ", e: "number"}, {h: "打", p: "dǎ", e: "dial"}, {h: "位", p: "wèi", e: "polite classifier"}, {h: "帮忙", p: "bāng máng", e: "help"}, {h: "下午", p: "xiàwǔ", e: "afternoon"}, {h: "可是", p: "kěshì", e: "but"}, {h: "手机", p: "shǒujī", e: "mobile phone"}, {h: "关机", p: "guān jī", e: "power off"}, {h: "转告", p: "zhuǎngào", e: "pass on"}, {h: "喂，是山下吗？", p: "Wèi, shì Shānxià ma?", e: "Hello, is this Shanshia?"}, {h: "我是高明生。", p: "Wǒ shì Gāo Míngshēng.", e: "I am Gao Mingsheng."}, {h: "你好，高明生。", p: "Nǐ hǎo, Gāo Míngshēng.", e: "Hello, Gao Mingsheng."}, {h: "有事吗？", p: "Yǒu shì ma?", e: "What's up?"}, {h: "今天是陈安美的生日", p: "Jīntiān shì Chén Ānměi de shēngrì", e: "Today is Chen Anmei's birthday."}, {h: "晚上我们有一个聚会", p: "Wǎnshang wǒmen yǒu yī ge jùhuì", e: "We have a party tonight."}, {h: "你能来吗？", p: "Nǐ néng lái ma?", e: "Can you come?"}, {h: "当然。几点？在哪儿？", p: "Dāngrán. Jǐ diǎn? Zài nǎr?", e: "Of course. When? Where?"}, {h: "八点，在学校南门外边的那个酒吧。", p: "Bā diǎn, zài xuéxiào nánmén wàibian de nà ge jiǔbā.", e: "8:00, at the bar outside the school south gate."}, {h: "好，我一定去。", p: "Hǎo, wǒ yídìng qù.", e: "Okay, I'll definitely go."}, {h: "请你的朋友田中也一起来。", p: "Qǐng nǐ de péngyou Tiánzhōng yě yìqǐ lái.", e: "Please ask your friend Tanaka to come too."}, {h: "我知道他的电话号码", p: "Wǒ zhīdào tā de diànhuà hàomǎ", e: "I know his phone number."}, {h: "我给他打电话。", p: "Wǒ gěi tā dǎ diànhuà.", e: "I'll call him."}, {h: "喂，哪位？", p: "Wèi, nǎ wèi?", e: "Hello, who is it?"}, {h: "你能帮我一个忙吗？", p: "Nǐ néng bāng wǒ yī ge máng ma?", e: "Can you do me a favor?"}, {h: "什么事？", p: "Shénme shì?", e: "What is it?"}, {h: "我今天下午给老师打电话", p: "Wǒ jīntiān xiàwǔ gěi lǎoshī dǎ diànhuà", e: "I called the teacher this afternoon."}, {h: "可是他的手机关机了。", p: "Kěshì tā de shǒujī guān jī le.", e: "But his phone was off."}, {h: "麻烦你转告他", p: "Máfan nǐ zhuǎngào tā", e: "Please tell him..."}, {h: "我感冒了，又发烧又咳嗽", p: "Wǒ gǎnmào le, yòu fā shāo yòu késòu", e: "I have a cold, fever, and cough."}, {h: "明天不能去上课。", p: "Míngtiān bùnéng qù shàng kè.", e: "Cannot attend class tomorrow."}, {h: "好，没问题。", p: "Hǎo, méi wèntí.", e: "Okay, no problem."}],
+      lesson12: [{h: "回国", p: "huí guó", e: "return to country"}, {h: "考试", p: "kǎo shì", e: "exam"}, {h: "星期", p: "xīngqī", e: "week"}, {h: "星期天", p: "xīngqītiān", e: "Sunday"}, {h: "已经", p: "yǐjīng", e: "already"}, {h: "买", p: "mǎi", e: "buy"}, {h: "飞机", p: "fēijī", e: "airplane"}, {h: "旅行", p: "lǚxíng", e: "travel"}, {h: "下", p: "xià", e: "next"}, {h: "月", p: "yuè", e: "month"}, {h: "打算", p: "dǎsuan", e: "plan"}, {h: "南方", p: "nánfāng", e: "south"}, {h: "火车", p: "huǒchē", e: "train"}, {h: "西部", p: "xībù", e: "west"}, {h: "以后", p: "yǐhòu", e: "after"}, {h: "常常", p: "chángcháng", e: "often"}, {h: "联系", p: "liánxì", e: "contact"}, {h: "开心", p: "kāixīn", e: "happy"}, {h: "会", p: "huì", e: "will"}, {h: "想", p: "xiǎng", e: "miss"}, {h: "你们考试了吗？", p: "Nǐmen kǎoshì le ma?", e: "Have you had the exam?"}, {h: "我们星期四考试。", p: "Wǒmen xīngqīsì kǎoshì.", e: "We have the exam on Thursday."}, {h: "你什么时候回国？", p: "Nǐ shénme shíhou huí guó?", e: "When are you returning home?"}, {h: "我星期天回国。", p: "Wǒ xīngqītiān huí guó.", e: "I return on Sunday."}, {h: "我已经买飞机票了。", p: "Wǒ yǐjīng mǎi fēijīpiào le.", e: "I already bought the plane ticket."}, {h: "你呢？", p: "Nǐ ne?", e: "How about you?"}, {h: "我要在中国旅行。", p: "Wǒ yào zài Zhōngguó lǚxíng.", e: "I want to travel in China."}, {h: "下个月回国。", p: "Xià ge yuè huí guó.", e: "Return next month."}, {h: "你去哪儿旅行？", p: "Nǐ qù nǎr lǚxíng?", e: "Where are you traveling?"}, {h: "我打算去南方。", p: "Wǒ dǎsuan qù nánfāng.", e: "I plan to go south."}, {h: "坐火车去。", p: "Zuò huǒchē qù.", e: "Go by train."}, {h: "你们要一起回国吗？", p: "Nǐmen yào yìqǐ huí guó ma?", e: "Are you returning together?"}, {h: "山下要去中国南方旅行。", p: "Shānxià yào qù Zhōngguó nánfāng lǚxíng.", e: "Shanshia wants to travel south."}, {h: "我也去旅行。", p: "Wǒ yě qù lǚxíng.", e: "I'm also traveling."}, {h: "可是我要去中国西部。", p: "Kěshì wǒ yào qù Zhōngguó xībù.", e: "But I'm going west."}, {h: "你们都去旅行。", p: "Nǐmen dōu qù lǚxíng.", e: "You are all traveling."}, {h: "我也不想回国了！", p: "Wǒ yě bù xiǎng huí guó le!", e: "I don't want to go home either!"}, {h: "以后我们把旅行的照片发给你吧。", p: "Yǐhòu wǒmen bǎ lǚxíng de zhàopiàn fā gěi nǐ ba.", e: "We'll send you travel photos later."}, {h: "我们回国以后也要常常联系。", p: "Wǒmen huí guó yǐhòu yě yào chángcháng liánxì.", e: "We should stay in touch after returning."}, {h: "一定要和我联系！", p: "Yídìng yào hé wǒ liánxì!", e: "Must keep in touch!"}, {h: "和你们在一起我太开心了。", p: "Hé nǐmen zài yìqǐ wǒ tài kāixīn le.", e: "I'm so happy to be with you."}, {h: "我一定会想你们的！", p: "Wǒ yídìng huì xiǎng nǐmen de!", e: "I will definitely miss you!"}, {h: "下次再来中国学习汉语吧。", p: "Xià cì zài lái Zhōngguó xuéxí Hànyǔ ba.", e: "Come back to study Chinese next time."}, {h: "那时候我们还可以在一起。", p: "Nà shíhou wǒmen hái kěyǐ zài yìqǐ.", e: "We can be together again then."}]
+    };
+
+    let flashcards = [];
+    let originalCards = [];
+    let currentIndex = 0;
+    let step = 0; 
+    let isRandom = false;
+
+    function switchLesson() {
+      const lesson = document.getElementById('lesson-select').value;
+      originalCards = [...allData[lesson]];
+      flashcards = [...originalCards];
+      currentIndex = 0;
+      step = 0;
+      isRandom = false;
+      document.getElementById('mode-btn').innerHTML = "Mode: Order";
+      updateDisplay();
+    }
+
+    function toggleMode() {
+      isRandom = !isRandom;
+      const btn = document.getElementById('mode-btn');
+      if (isRandom) {
+        btn.innerHTML = "Mode: Random";
+        for (let i = flashcards.length - 1; i > 0; i--) {
+          const j = Math.floor(Math.random() * (i + 1));
+          [flashcards[i], flashcards[j]] = [flashcards[j], flashcards[i]];
+        }
+      } else {
+        btn.innerHTML = "Mode: Order";
+        flashcards = [...originalCards];
+      }
+      currentIndex = 0;
+      step = 0;
+      updateDisplay();
+    }
+
+    function updateDisplay() {
+      const mainEl = document.getElementById('main-text');
+      const subEl = document.getElementById('sub-text');
+      const progressEl = document.getElementById('progress-bar');
+      
+      if (step === 0) {
+        const lessonName = document.getElementById('lesson-select').options[document.getElementById('lesson-select').selectedIndex].text;
+        mainEl.innerHTML = lessonName; subEl.innerHTML = "";
+        progressEl.innerHTML = `Cards: ${flashcards.length}`;
+      } else {
+        mainEl.innerHTML = flashcards[currentIndex].h;
+        progressEl.innerHTML = `Progress: ${currentIndex + 1} / ${flashcards.length}`;
+        
+        if (step === 1) subEl.innerHTML = "";
+        else if (step === 2) subEl.innerHTML = flashcards[currentIndex].p;
+        else if (step === 3) subEl.innerHTML = flashcards[currentIndex].p + " <br> " + flashcards[currentIndex].e;
+      }
+    }
+
+    function nextStep() {
+      step++;
+      if (step > 3) {
+        step = 1;
+        currentIndex = (currentIndex + 1) % flashcards.length;
+        document.body.style.backgroundColor = `hsl(${Math.random() * 360}, 50%, 90%)`;
+      }
+      updateDisplay();
+    }
+
+    function changeCard(direction) {
+      currentIndex = (currentIndex + direction + flashcards.length) % flashcards.length;
+      step = 1;
+      updateDisplay();
+    }
+
+    switchLesson();
+  </script>
+</body>
+</html>
